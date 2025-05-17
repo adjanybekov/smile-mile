@@ -31,6 +31,12 @@
   <canvas id="overlay" width="640" height="480"></canvas>
 
   <script>
+    function distance(p1, p2) {
+      const dx = p1.x - p2.x;
+      const dy = p1.y - p2.y;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
     function init() {
       const statusEl = document.getElementById('status');
       const video = document.getElementById('video');
@@ -72,7 +78,26 @@
           faceapi.draw.drawDetections(canvas, resized);
           faceapi.draw.drawFaceLandmarks(canvas, resized);
   
-          statusEl.innerText = resized.length ? '✅ Face detected' : '❌ No face';
+          if (resized.length) {
+            const landmarks = resized[0].landmarks;
+            const mouth = landmarks.positions;
+
+            const leftMouth = mouth[48];
+            const rightMouth = mouth[54];
+            const topLip = mouth[51];
+            const bottomLip = mouth[57];
+
+            const mouthWidth = distance(leftMouth, rightMouth);
+            const mouthOpen = distance(topLip, bottomLip);
+
+            // Smile threshold tuning (can adjust later)
+            const isSmiling = mouthWidth > 60 && mouthOpen > 1;
+
+            statusEl.innerText = isSmiling ? '😁 Smiling!' : '🙂 Neutral';
+          } else {
+            statusEl.innerText = '❌ No face';
+          }
+
         }, 200);
       }
     }
