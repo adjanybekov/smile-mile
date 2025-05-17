@@ -65,6 +65,10 @@
       }
   
       async function runDetectionLoop() {
+        let smileStartTime = null;
+        let smileHeld = false;
+        let rewardShown = false;
+
         const displaySize = { width: video.width, height: video.height };
         faceapi.matchDimensions(canvas, displaySize);
   
@@ -93,12 +97,39 @@
             // Smile threshold tuning (can adjust later)
             const isSmiling = mouthWidth > 60 && mouthOpen > 1;
 
-            statusEl.innerText = isSmiling ? '😁 Smiling!' : '🙂 Neutral';
+            if (isSmiling) {
+              if (!smileStartTime) {
+                smileStartTime = Date.now();
+              }
+
+              const heldFor = (Date.now() - smileStartTime) / 1000;
+
+              if (heldFor >= 5 && !rewardShown) {
+                smileHeld = true;
+                rewardShown = true;
+                statusEl.innerText = '🎉 Smile held for 5 seconds! Great job!';
+                showReward();
+              } else if (!rewardShown) {
+                statusEl.innerText = `😁 Keep smiling... ${heldFor.toFixed(1)}s`;
+              }
+            } else {
+              // Reset everything if smile drops
+              smileStartTime = null;
+              smileHeld = false;
+              rewardShown = false;
+              statusEl.innerText = '🙂 Neutral';
+            }
+
           } else {
             statusEl.innerText = '❌ No face';
           }
 
         }, 200);
+
+        function showReward() {
+          alert("You smiled for 5 seconds! 💛 Keep it up!");
+        }
+
       }
     }
   </script>
